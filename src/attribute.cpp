@@ -779,6 +779,7 @@ void RuntimeAttribute::_bind_methods()
 	ClassDB::bind_method(D_METHOD("can_receive_buff", "p_buff"), &RuntimeAttribute::can_receive_buff);
 	ClassDB::bind_method(D_METHOD("clear_buffs"), &RuntimeAttribute::clear_buffs);
 	ClassDB::bind_method(D_METHOD("get_attribute"), &RuntimeAttribute::get_attribute);
+	ClassDB::bind_method(D_METHOD("get_attribute_name"), &RuntimeAttribute::get_attribute_name);
 	ClassDB::bind_method(D_METHOD("get_attribute_set"), &RuntimeAttribute::get_attribute_set);
 	ClassDB::bind_method(D_METHOD("get_buffed_value"), &RuntimeAttribute::get_buffed_value);
 	ClassDB::bind_method(D_METHOD("get_buffs"), &RuntimeAttribute::get_buffs);
@@ -902,6 +903,12 @@ void RuntimeAttribute::compute_value()
 void RuntimeAttribute::clear_buffs()
 {
 	buffs.clear();
+}
+
+String RuntimeAttribute::get_attribute_name() const
+{
+	ERR_FAIL_COND_V_MSG(attribute.is_null(), "", "Attribute is null, cannot get attribute name.");
+	return attribute->get_attribute_name();
 }
 
 TypedArray<RuntimeAttribute> RuntimeAttribute::get_parent_runtime_attributes() const

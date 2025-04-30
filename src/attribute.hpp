@@ -525,6 +525,10 @@ namespace octod::gameplay::attributes
 		/// @brief Clear the buffs from the attribute.
 		void clear_buffs();
 
+		/// @brief Gets the attribute name.
+		/// @return The attribute name
+		[[nodiscard]] String get_attribute_name() const;
+
 		/// @brief Get the parent runtime attributes.
 		/// @return An array of runtime attributes.
 		[[nodiscard]] TypedArray<RuntimeAttribute> get_parent_runtime_attributes() const;
