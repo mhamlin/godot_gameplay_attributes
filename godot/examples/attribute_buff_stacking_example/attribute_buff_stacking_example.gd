@@ -47,7 +47,15 @@ func _ready() -> void:
 	attribute_container.buff_removed.connect(make_draw_buff("Buff removed: "))
 	
 	attribute_container.buff_enqueued.connect(func (buff: RuntimeBuff):
-		time_left_label.text = String.num(buff.get_time_left(), 2) + "s"
+		print("Buff {0} enqueued".format({
+			0: buff.get_buff_name()
+		}))
+	)
+	
+	attribute_container.buff_dequed.connect(func (buff: RuntimeBuff):
+		print("Buff {0} dequeued".format({
+			0: buff.get_buff_name()
+		}))
 	)
 	
 	attribute_container.buff_time_elapsed.connect(func (buff: RuntimeBuff):

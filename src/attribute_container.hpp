@@ -35,7 +35,7 @@ namespace octod::gameplay::attributes
 
 		/// @brief Adds a buff to the container.
 		/// @param p_buff The buff to add.
-		void apply_buff(const Ref<AttributeBuff> &p_buff) const;
+		void apply_buff(const Ref<AttributeBuff> &p_buff);
 
 		/// @brief Removes an attribute from the container.
 		/// @param p_attribute The attribute to remove.
@@ -45,7 +45,7 @@ namespace octod::gameplay::attributes
 		/// @param p_buff The buff to remove.
 		void remove_buff(const Ref<AttributeBuff> &p_buff) const;
 
-		/// @brief Setups the container.
+		/// @brief Sets up the container.
 		void setup();
 
 		/// @brief Finds an attribute in the container.
@@ -120,14 +120,6 @@ namespace octod::gameplay::attributes
 		/// @brief Handles the buff_applied signal.
 		/// @param p_buff The buff that was applied.
 		void _on_buff_applied(const Ref<RuntimeBuff> &p_buff);
-
-		/// @brief Handles the buff_dequeued signal.
-		/// @param p_buff The buff that was dequeued.
-		void _on_buff_dequeued(const Ref<RuntimeBuff> &p_buff);
-
-		/// @brief Handles the buff_enqueued signal.
-		/// @param p_buff The buff that was enqueued.
-		void _on_buff_enqueued(const Ref<RuntimeBuff> &p_buff);
 
 		/// @brief Handles the buff_removed signal.
 		/// @param p_buff The buff that was removed.

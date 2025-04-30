@@ -202,16 +202,9 @@ bool AttributeBuff::equals_to(const Ref<AttributeBuff> &buff) const
 	ERR_FAIL_COND_V_MSG(!buff.is_valid(), false, "Cannot compare to invalid AttributeBuff. This is a bug, please report it.");
 
 	return (
-			Math::is_equal_approx(buff->duration, duration)
-			&& attribute_name == buff->attribute_name
-			&& buff_name == buff->buff_name
-			&& duration_merging == buff->duration_merging
-			&& max_stacking == buff->max_stacking
+			Math::is_equal_approx(buff->duration, duration) && attribute_name == buff->attribute_name && buff_name == buff->buff_name && duration_merging == buff->duration_merging && max_stacking == buff->max_stacking
 			// && operation->equals_to(buff->operation)
-			&& queue_execution == buff->queue_execution
-			&& transient == buff->transient
-			&& unique == buff->unique
-	);
+			&& queue_execution == buff->queue_execution && transient == buff->transient && unique == buff->unique);
 }
 
 float AttributeBuff::operate(const float base_value) const
@@ -834,6 +827,10 @@ bool RuntimeAttribute::add_buff(const Ref<AttributeBuff> &p_buff)
 
 		buffs.push_back(runtime_buff);
 		emit_signal("buff_added", runtime_buff);
+
+		if (!Math::is_zero_approx(p_buff->get_duration())) {
+			emit_signal("buff_enqueued", runtime_buff);
+		}
 	} else {
 		previous_value = value;
 

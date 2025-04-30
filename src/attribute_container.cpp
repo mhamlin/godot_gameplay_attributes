@@ -20,8 +20,6 @@ void AttributeContainer::_bind_methods()
 	/// binds methods to godot
 	ClassDB::bind_method(D_METHOD("_on_attribute_changed", "p_attribute", "p_previous_value", "p_new_value"), &AttributeContainer::_on_attribute_changed);
 	ClassDB::bind_method(D_METHOD("_on_buff_applied", "p_buff"), &AttributeContainer::_on_buff_applied);
-	ClassDB::bind_method(D_METHOD("_on_buff_dequeued", "p_buff"), &AttributeContainer::_on_buff_dequeued);
-	ClassDB::bind_method(D_METHOD("_on_buff_enqueued", "p_buff"), &AttributeContainer::_on_buff_enqueued);
 	ClassDB::bind_method(D_METHOD("_on_buff_removed", "p_buff"), &AttributeContainer::_on_buff_removed);
 	ClassDB::bind_method(D_METHOD("_on_buff_time_updated", "p_buff"), &AttributeContainer::_on_buff_time_updated);
 	ClassDB::bind_method(D_METHOD("add_attribute", "p_attribute"), &AttributeContainer::add_attribute);
@@ -84,8 +82,7 @@ void AttributeContainer::_notification(const int p_what)
 
 					if (buff->can_dequeue()) {
 						emit_signal("buff_dequed", buff);
-						attribute->remove_buff(buff);
-						buffs.remove_at(j);
+						remove_buff(buff->buff);
 					}
 				}
 			}
@@ -106,17 +103,6 @@ void AttributeContainer::_on_buff_applied(const Ref<RuntimeBuff> &p_buff)
 	if (const auto attribute = get_runtime_attribute_by_name(p_buff->get_attribute_name()); attribute.is_valid() && !attribute.is_null()) {
 		notify_derived_attributes(attribute);
 	}
-}
-
-void AttributeContainer::_on_buff_dequeued(const Ref<RuntimeBuff> &p_buff)
-{
-	emit_signal("buff_dequed", p_buff);
-	remove_buff(p_buff->buff);
-}
-
-void AttributeContainer::_on_buff_enqueued(const Ref<RuntimeBuff> &p_buff)
-{
-	emit_signal("buff_enqueued", p_buff);
 }
 
 void AttributeContainer::_on_buff_removed(const Ref<RuntimeBuff> &p_buff)
@@ -199,7 +185,7 @@ void AttributeContainer::add_attribute(const Ref<AttributeBase> &p_attribute)
 	attributes[p_attribute->get_attribute_name()] = runtime_attribute;
 }
 
-void AttributeContainer::apply_buff(const Ref<AttributeBuff> &p_buff) const
+void AttributeContainer::apply_buff(const Ref<AttributeBuff> &p_buff)
 {
 	ERR_FAIL_NULL_MSG(p_buff, "Buff cannot be null, it must be an instance of a class inheriting from AttributeBuff abstract class.");
 
@@ -244,7 +230,9 @@ void AttributeContainer::apply_buff(const Ref<AttributeBuff> &p_buff) const
 			derived_buff->set_transient(p_buff->get_transient());
 			derived_buff->set_operation(operations[i]);
 
-			runtime_attribute->add_buff(derived_buff);
+			if (runtime_attribute->add_buff(derived_buff) && p_buff->get_transient() && !Math::is_zero_approx(p_buff->get_duration())) {
+				emit_signal("buff_enqueued", RuntimeBuff::from_buff(p_buff));
+			}
 		}
 	} else {
 		const Ref<RuntimeAttribute> runtime_attribute = get_runtime_attribute_by_name(p_buff->get_attribute_name());
@@ -252,7 +240,9 @@ void AttributeContainer::apply_buff(const Ref<AttributeBuff> &p_buff) const
 		ERR_FAIL_COND_MSG(!runtime_attribute.is_valid(), "Attribute '" + p_buff->get_attribute_name() + "' not found in the container.");
 		ERR_FAIL_COND_MSG(runtime_attribute.is_null(), "Attribute reference is not valid.");
 
-		runtime_attribute->add_buff(p_buff);
+		if (runtime_attribute->add_buff(p_buff) && p_buff->get_transient() && !Math::is_zero_approx(p_buff->get_duration())) {
+			emit_signal("buff_enqueued", RuntimeBuff::from_buff(p_buff));
+		}
 	}
 }
 
@@ -280,7 +270,6 @@ void AttributeContainer::remove_buff(const Ref<AttributeBuff> &p_buff) const
 {
 	ERR_FAIL_NULL_MSG(p_buff, "Buff cannot be null, it must be an instance of a class inheriting from AttributeBuff abstract class.");
 	ERR_FAIL_COND_MSG(p_buff.is_null(), "Buff cannot be null, it must be an instance of a class inheriting from AttributeBuff abstract class.");
-	ERR_FAIL_COND_MSG(!p_buff.is_valid(), "Buff reference not valid.");
 
 	if (p_buff->is_operate_overridden()) {
 		TypedArray<AttributeBase> _attributes;
