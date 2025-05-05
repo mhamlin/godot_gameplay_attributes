@@ -751,6 +751,12 @@ bool RuntimeBuff::is_transient() const
 	return buff->transient;
 }
 
+bool RuntimeBuff::is_transient_time_based() const
+{
+	ERR_FAIL_COND_V_MSG(buff.is_null(), false, "AttributeBuff is null.");
+	return buff->transient && !Math::is_zero_approx(buff->duration);
+}
+
 void RuntimeBuff::set_buff(const Ref<AttributeBuff> &p_value)
 {
 	buff = p_value;

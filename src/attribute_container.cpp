@@ -69,13 +69,7 @@ void AttributeContainer::_notification(const int p_what)
 			TypedArray<RuntimeBuff> buffs = attribute->get_buffs();
 
 			for (int64_t j = buffs.size() - 1; j >= 0; j--) {
-				Ref<RuntimeBuff> buff = buffs[j];
-
-				if (!buff.is_valid() || buff.is_null()) {
-					continue;
-				}
-
-				if (buff->is_transient() && buff->has_duration()) {
+				if (Ref<RuntimeBuff> buff = buffs[j]; buff.is_valid() && buff->is_transient_time_based()) {
 					buff->set_time_left(buff->get_time_left() - phy_time);
 
 					emit_signal("buff_time_elapsed", buff);

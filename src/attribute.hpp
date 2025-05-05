@@ -420,7 +420,9 @@ namespace octod::gameplay::attributes
 		static void _bind_methods();
 	};
 
-	/// @brief Runtime buff.
+	/**
+	 *
+	 */
 	class RuntimeBuff : public RefCounted
 	{
 		GDCLASS(RuntimeBuff, RefCounted);
@@ -473,6 +475,9 @@ namespace octod::gameplay::attributes
 		/// @brief Returns if the buff is transient.
 		/// @return True if the buff is transient, false otherwise.
 		[[nodiscard]] bool is_transient() const;
+		/// @brief Returns if the buff is transient and time based.
+		/// @return True if the buff is transient and its own duration is greater than 0.0.
+		bool is_transient_time_based() const;
 		/// @brief Set the buff.
 		/// @param p_value The buff.
 		void set_buff(const Ref<AttributeBuff> &p_value);
