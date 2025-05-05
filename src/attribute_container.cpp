@@ -70,6 +70,12 @@ void AttributeContainer::_notification(const int p_what)
 
 			for (int64_t j = buffs.size() - 1; j >= 0; j--) {
 				if (Ref<RuntimeBuff> buff = buffs[j]; buff.is_valid() && buff->is_transient_time_based()) {
+					/// todo: check if the buff needs a waterfall or parallel execution.
+					/// for the latter, keep the code as it is
+					/// for the first, check if another buff of the same
+					/// type exists in the queue (reversed lookup maybe? it should not be detrimental for performance) and,
+					/// if present, the loop should skip this index to the next.
+
 					buff->set_time_left(buff->get_time_left() - phy_time);
 
 					emit_signal("buff_time_elapsed", buff);
