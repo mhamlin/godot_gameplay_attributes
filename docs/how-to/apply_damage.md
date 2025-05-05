@@ -47,15 +47,16 @@ and multiple damage sources.
 
 The logic (to handle the most complex cases) could sound awkward:
 - you have to create, for each damage type you need, a damage attribute
-- you have to assign these attributes to any attribute set you need (player, mobs etc.). 
-- you must not deal damage directly to the health, instead you have to increase the damage attributes
+- you have to assign these attributes to any attribute set you need (player, mobs, etc.). 
+- you must not deal with damage directly to the health, instead you have to increase the damage attributes
 - once an attribute changed, the [`AttributeContainer`](../classes/AttributeContainer.md) emits a `attribute_changed` signal.
 - if the attribute changed is a damage attribute, you should apply a new attribute buff
   which is going to take care of calculating the proper damage, operating on health attribute and resetting the damage attribute(s) to 0.0.
 
 ## Example 2.1, a complex but less complex way
 
-Same as the example above, but instead of handling damage as attributes, you
-can export the damage type(s) and value(s) as a resource, and once the buff
-is applied, take those in account to determine how the buff can damage the health attribute.
+As the example above, but instead of handling damage as attributes, you
+can export the damage type(s) and value(s) as a resource.
+Once the buff
+is applied, take those into consideration to determine how the buff can damage the health attribute.
 
