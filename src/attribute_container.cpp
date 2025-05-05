@@ -321,13 +321,13 @@ Ref<RuntimeAttribute> AttributeContainer::find(const Callable &p_predicate) cons
 float AttributeContainer::find_buffed_value(const Callable &p_predicate) const
 {
 	const Ref<RuntimeAttribute> attribute = find(p_predicate);
-	return attribute.is_valid() && !attribute.is_null() ? attribute->get_buffed_value() : 0.0f;
+	return attribute.is_valid() ? attribute->get_buffed_value() : 0.0f;
 }
 
 float AttributeContainer::find_value(const Callable &p_predicate) const
 {
 	const Ref<RuntimeAttribute> attribute = find(p_predicate);
-	return attribute.is_valid() && !attribute.is_null() ? attribute->get_value() : 0.0f;
+	return attribute.is_valid() ? attribute->get_value() : 0.0f;
 }
 
 Ref<AttributeSet> AttributeContainer::get_attribute_set() const
@@ -352,19 +352,19 @@ Ref<RuntimeAttribute> AttributeContainer::get_runtime_attribute_by_name(const St
 float AttributeContainer::get_attribute_buffed_value_by_name(const String &p_name) const
 {
 	const Ref<RuntimeAttribute> attribute = get_runtime_attribute_by_name(p_name);
-	return attribute.is_valid() && !attribute.is_null() ? attribute->get_buffed_value() : 0.0f;
+	return attribute.is_valid() ? attribute->get_buffed_value() : 0.0f;
 }
 
 float AttributeContainer::get_attribute_previous_value_by_name(const String &p_name) const
 {
 	const Ref<RuntimeAttribute> attribute = get_runtime_attribute_by_name(p_name);
-	return attribute.is_valid() && !attribute.is_null() ? attribute->get_previous_value() : 0.0f;
+	return attribute.is_valid() ? attribute->get_previous_value() : 0.0f;
 }
 
 float AttributeContainer::get_attribute_value_by_name(const String &p_name) const
 {
 	const Ref<RuntimeAttribute> attribute = get_runtime_attribute_by_name(p_name);
-	return attribute.is_valid() && !attribute.is_null() ? attribute->get_value() : 0.0f;
+	return attribute.is_valid() ? attribute->get_value() : 0.0f;
 }
 
 void AttributeContainer::set_attribute_set(const Ref<AttributeSet> &p_attribute_set)
