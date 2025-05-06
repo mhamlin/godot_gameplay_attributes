@@ -231,7 +231,7 @@ void AttributeContainer::apply_buff(const Ref<AttributeBuff> &p_buff)
 			derived_buff->set_operation(operations[i]);
 
 			if (runtime_attribute->add_buff(derived_buff) && p_buff->get_transient() && !Math::is_zero_approx(p_buff->get_duration())) {
-				emit_signal("buff_enqueued", RuntimeBuff::from_buff(p_buff));
+				emit_signal("buff_enqueued", runtime_attribute->buffs.get(runtime_attribute->buffs.size() - 1));
 			}
 		}
 	} else {
@@ -241,7 +241,7 @@ void AttributeContainer::apply_buff(const Ref<AttributeBuff> &p_buff)
 		ERR_FAIL_COND_MSG(runtime_attribute.is_null(), "Attribute reference is not valid.");
 
 		if (runtime_attribute->add_buff(p_buff) && p_buff->get_transient() && !Math::is_zero_approx(p_buff->get_duration())) {
-			emit_signal("buff_enqueued", RuntimeBuff::from_buff(p_buff));
+			emit_signal("buff_enqueued", runtime_attribute->buffs.get(runtime_attribute->buffs.size() - 1));
 		}
 	}
 }
