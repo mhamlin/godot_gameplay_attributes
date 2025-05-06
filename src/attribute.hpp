@@ -420,22 +420,14 @@ namespace octod::gameplay::attributes
 		static void _bind_methods();
 	};
 
-	/// @brief Runtime buff.
+	/**
+	 *
+	 */
 	class RuntimeBuff : public RefCounted
 	{
 		GDCLASS(RuntimeBuff, RefCounted);
 
 	public:
-		static Ref<RuntimeBuff> from_buff(const Ref<AttributeBuff> &p_buff);
-		static Ref<AttributeBuff> to_buff(const Ref<RuntimeBuff> &p_buff);
-		/// @brief It is the == operator overload.
-		/// @param p_attribute The attribute to compare.
-		/// @return True if the attribute is equal, false otherwise.
-		bool operator==(const Ref<AttributeBuff> &p_attribute) const;
-		/// @brief It is the == operator overload.
-		/// @param p_attribute The runtime attribute to compare.
-		/// @return True if the runtime attribute is equal, false otherwise.
-		bool operator==(const Ref<RuntimeBuff> &p_attribute) const;
 		/// @brief Returns if the buff can be applied to an attribute.
 		/// @param p_attribute The attribute to check.
 		/// @return True if the buff can be applied to the attribute, false otherwise.
@@ -473,6 +465,9 @@ namespace octod::gameplay::attributes
 		/// @brief Returns if the buff is transient.
 		/// @return True if the buff is transient, false otherwise.
 		[[nodiscard]] bool is_transient() const;
+		/// @brief Returns if the buff is transient and time based.
+		/// @return True if the buff is transient and its own duration is greater than 0.0.
+		bool is_transient_time_based() const;
 		/// @brief Set the buff.
 		/// @param p_value The buff.
 		void set_buff(const Ref<AttributeBuff> &p_value);
@@ -512,7 +507,7 @@ namespace octod::gameplay::attributes
 		/// @brief Add a buff to the attribute.
 		/// @param p_buff The buff to add.
 		/// @return True if the buff was added, false otherwise.
-		bool add_buff(const Ref<AttributeBuff> &p_buff);
+		Ref<RuntimeBuff> add_buff(const Ref<AttributeBuff> &p_buff);
 
 		/// @brief Check if the attribute can receive a buff.
 		/// @param p_buff The buff to check.

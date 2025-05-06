@@ -43,7 +43,7 @@ void AttributeContainer::_bind_methods()
 	/// signals binding
 	ADD_SIGNAL(MethodInfo("attribute_changed", PropertyInfo(Variant::OBJECT, "attribute", PROPERTY_HINT_RESOURCE_TYPE, "RuntimeAttributeBase"), PropertyInfo(Variant::FLOAT, "previous_value"), PropertyInfo(Variant::FLOAT, "new_value")));
 	ADD_SIGNAL(MethodInfo("buff_applied", PropertyInfo(Variant::OBJECT, "buff", PROPERTY_HINT_RESOURCE_TYPE, "RuntimeBuff")));
-	ADD_SIGNAL(MethodInfo("buff_dequed", PropertyInfo(Variant::OBJECT, "buff", PROPERTY_HINT_RESOURCE_TYPE, "RuntimeBuff")));
+	ADD_SIGNAL(MethodInfo("buff_dequeued", PropertyInfo(Variant::OBJECT, "buff", PROPERTY_HINT_RESOURCE_TYPE, "RuntimeBuff")));
 	ADD_SIGNAL(MethodInfo("buff_enqueued", PropertyInfo(Variant::OBJECT, "buff", PROPERTY_HINT_RESOURCE_TYPE, "RuntimeBuff")));
 	ADD_SIGNAL(MethodInfo("buff_removed", PropertyInfo(Variant::OBJECT, "buff", PROPERTY_HINT_RESOURCE_TYPE, "RuntimeBuff")));
 	ADD_SIGNAL(MethodInfo("buff_time_elapsed", PropertyInfo(Variant::OBJECT, "buff", PROPERTY_HINT_RESOURCE_TYPE, "RuntimeBuff")));
@@ -69,19 +69,34 @@ void AttributeContainer::_notification(const int p_what)
 			TypedArray<RuntimeBuff> buffs = attribute->get_buffs();
 
 			for (int64_t j = buffs.size() - 1; j >= 0; j--) {
-				Ref<RuntimeBuff> buff = buffs[j];
+				if (const Ref<RuntimeBuff> &buff = buffs[j]; buff.is_valid() && buff->is_transient_time_based()) {
+					/// check if the buff needs a waterfall or parallel execution.
+					/// for the latter, keep the code as it is
+					/// for the first, check if another buff of the same
+					/// type exists in the queue and,
+					/// if present, avoid setting the time left.
+					if (buff->get_buff()->get_queue_execution() == AttributeBuff::QueueExecution::QUEUE_EXECUTION_WATERFALL) {
+						bool should_skip = false;
 
-				if (!buff.is_valid() || buff.is_null()) {
-					continue;
-				}
+						/// we act as a fifo, so let's see if there are other buffs applied before the current one.
+						for (int64_t k = j - 1; k >= 0; k--) {
+							if (Ref<RuntimeBuff> other_buff = buffs[k]; other_buff->equals_to(buff->buff)) {
+								should_skip = true;
+								break;
+							}
+						}
 
-				if (buff->is_transient() && buff->has_duration()) {
+						if (should_skip) {
+							continue;
+						}
+					}
+
 					buff->set_time_left(buff->get_time_left() - phy_time);
 
 					emit_signal("buff_time_elapsed", buff);
 
 					if (buff->can_dequeue()) {
-						emit_signal("buff_dequed", buff);
+						emit_signal("buff_dequeued", buff);
 						remove_buff(buff->buff);
 					}
 				}
@@ -96,11 +111,11 @@ void AttributeContainer::_on_attribute_changed(const Ref<RuntimeAttribute> &p_at
 	notify_derived_attributes(p_attribute);
 }
 
-void AttributeContainer::_on_buff_applied(const Ref<RuntimeBuff> &p_buff)
+void AttributeContainer::_on_buff_applied(RuntimeBuff *p_buff)
 {
-	emit_signal("buff_applied", p_buff);
+	emit_signal("buff_applied", Ref(p_buff));
 
-	if (const auto attribute = get_runtime_attribute_by_name(p_buff->get_attribute_name()); attribute.is_valid() && !attribute.is_null()) {
+	if (const auto attribute = get_runtime_attribute_by_name(p_buff->get_attribute_name()); attribute.is_valid()) {
 		notify_derived_attributes(attribute);
 	}
 }
@@ -216,9 +231,10 @@ void AttributeContainer::apply_buff(const Ref<AttributeBuff> &p_buff)
 		/// we are going to create a new AttributeBuff for each derived attribute affected by the buff
 		/// we will add this buff to each affected runtime attribute.
 		for (int i = 0; i < operations.size(); i++) {
-			Ref derived_buff = memnew(AttributeBuff);
+			Ref<AttributeBuff> derived_buff;
+			derived_buff.instantiate();
 
-			const Ref<RuntimeAttribute> runtime_attribute = _affected_runtime_attributes[i];
+			const Ref<RuntimeAttribute> &runtime_attribute = _affected_runtime_attributes[i];
 
 			derived_buff->set_attribute_name(runtime_attribute->get_attribute()->get_attribute_name());
 			derived_buff->set_buff_name(p_buff->get_buff_name());
@@ -230,8 +246,8 @@ void AttributeContainer::apply_buff(const Ref<AttributeBuff> &p_buff)
 			derived_buff->set_transient(p_buff->get_transient());
 			derived_buff->set_operation(operations[i]);
 
-			if (runtime_attribute->add_buff(derived_buff) && p_buff->get_transient() && !Math::is_zero_approx(p_buff->get_duration())) {
-				emit_signal("buff_enqueued", RuntimeBuff::from_buff(p_buff));
+			if (Ref<RuntimeBuff> latest_runtime_buff_applied = runtime_attribute->add_buff(derived_buff); latest_runtime_buff_applied.is_valid() && p_buff->get_transient() && !Math::is_zero_approx(p_buff->get_duration())) {
+				emit_signal("buff_enqueued", latest_runtime_buff_applied);
 			}
 		}
 	} else {
@@ -240,8 +256,8 @@ void AttributeContainer::apply_buff(const Ref<AttributeBuff> &p_buff)
 		ERR_FAIL_COND_MSG(!runtime_attribute.is_valid(), "Attribute '" + p_buff->get_attribute_name() + "' not found in the container.");
 		ERR_FAIL_COND_MSG(runtime_attribute.is_null(), "Attribute reference is not valid.");
 
-		if (runtime_attribute->add_buff(p_buff) && p_buff->get_transient() && !Math::is_zero_approx(p_buff->get_duration())) {
-			emit_signal("buff_enqueued", RuntimeBuff::from_buff(p_buff));
+		if (Ref<RuntimeBuff> latest_runtime_buff_applied = runtime_attribute->add_buff(p_buff); latest_runtime_buff_applied.is_valid() && p_buff->get_transient() && !Math::is_zero_approx(p_buff->get_duration())) {
+			emit_signal("buff_enqueued", latest_runtime_buff_applied);
 		}
 	}
 }
@@ -321,13 +337,13 @@ Ref<RuntimeAttribute> AttributeContainer::find(const Callable &p_predicate) cons
 float AttributeContainer::find_buffed_value(const Callable &p_predicate) const
 {
 	const Ref<RuntimeAttribute> attribute = find(p_predicate);
-	return attribute.is_valid() && !attribute.is_null() ? attribute->get_buffed_value() : 0.0f;
+	return attribute.is_valid() ? attribute->get_buffed_value() : 0.0f;
 }
 
 float AttributeContainer::find_value(const Callable &p_predicate) const
 {
 	const Ref<RuntimeAttribute> attribute = find(p_predicate);
-	return attribute.is_valid() && !attribute.is_null() ? attribute->get_value() : 0.0f;
+	return attribute.is_valid() ? attribute->get_value() : 0.0f;
 }
 
 Ref<AttributeSet> AttributeContainer::get_attribute_set() const
@@ -352,19 +368,19 @@ Ref<RuntimeAttribute> AttributeContainer::get_runtime_attribute_by_name(const St
 float AttributeContainer::get_attribute_buffed_value_by_name(const String &p_name) const
 {
 	const Ref<RuntimeAttribute> attribute = get_runtime_attribute_by_name(p_name);
-	return attribute.is_valid() && !attribute.is_null() ? attribute->get_buffed_value() : 0.0f;
+	return attribute.is_valid() ? attribute->get_buffed_value() : 0.0f;
 }
 
 float AttributeContainer::get_attribute_previous_value_by_name(const String &p_name) const
 {
 	const Ref<RuntimeAttribute> attribute = get_runtime_attribute_by_name(p_name);
-	return attribute.is_valid() && !attribute.is_null() ? attribute->get_previous_value() : 0.0f;
+	return attribute.is_valid() ? attribute->get_previous_value() : 0.0f;
 }
 
 float AttributeContainer::get_attribute_value_by_name(const String &p_name) const
 {
 	const Ref<RuntimeAttribute> attribute = get_runtime_attribute_by_name(p_name);
-	return attribute.is_valid() && !attribute.is_null() ? attribute->get_value() : 0.0f;
+	return attribute.is_valid() ? attribute->get_value() : 0.0f;
 }
 
 void AttributeContainer::set_attribute_set(const Ref<AttributeSet> &p_attribute_set)

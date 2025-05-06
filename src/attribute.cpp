@@ -199,12 +199,9 @@ bool AttributeBuff::equals_to(const Ref<AttributeBuff> &buff) const
 	}
 
 	ERR_FAIL_COND_V_MSG(buff.is_null(), false, "Cannot compare to null AttributeBuff. This is a bug, please report it.");
-	ERR_FAIL_COND_V_MSG(!buff.is_valid(), false, "Cannot compare to invalid AttributeBuff. This is a bug, please report it.");
 
 	return (
-			Math::is_equal_approx(buff->duration, duration) && attribute_name == buff->attribute_name && buff_name == buff->buff_name && duration_merging == buff->duration_merging && max_stacking == buff->max_stacking
-			// && operation->equals_to(buff->operation)
-			&& queue_execution == buff->queue_execution && transient == buff->transient && unique == buff->unique);
+			Math::is_equal_approx(buff->duration, duration) && attribute_name == buff->attribute_name && buff_name == buff->buff_name && duration_merging == buff->duration_merging && max_stacking == buff->max_stacking && queue_execution == buff->queue_execution && transient == buff->transient && unique == buff->unique);
 }
 
 float AttributeBuff::operate(const float base_value) const
@@ -635,8 +632,6 @@ int AttributeSet::count() const
 void RuntimeBuff::_bind_methods()
 {
 	/// binds methods to godot
-	ClassDB::bind_static_method("RuntimeBuff", D_METHOD("from_buff", "p_buff"), &RuntimeBuff::from_buff);
-	ClassDB::bind_static_method("RuntimeBuff", D_METHOD("to_buff", "p_buff"), &RuntimeBuff::to_buff);
 	ClassDB::bind_method(D_METHOD("get_attribute_name"), &RuntimeBuff::get_attribute_name);
 	ClassDB::bind_method(D_METHOD("get_buff_name"), &RuntimeBuff::get_buff_name);
 	ClassDB::bind_method(D_METHOD("get_duration"), &RuntimeBuff::get_duration);
@@ -670,29 +665,6 @@ float RuntimeBuff::operate(const Ref<RuntimeAttribute> &p_runtime_attribute) con
 	ERR_FAIL_NULL_V_MSG(p_runtime_attribute, 0.0f, "Runtime attribute is null, cannot operate on it.");
 
 	return buff->operate(p_runtime_attribute->value);
-}
-
-Ref<RuntimeBuff> RuntimeBuff::from_buff(const Ref<AttributeBuff> &p_buff)
-{
-	Ref runtime_buff = memnew(RuntimeBuff);
-	runtime_buff->buff = p_buff;
-	runtime_buff->time_left = p_buff->get_duration();
-	return runtime_buff;
-}
-
-Ref<AttributeBuff> RuntimeBuff::to_buff(const Ref<RuntimeBuff> &p_buff)
-{
-	return p_buff->buff;
-}
-
-bool RuntimeBuff::operator==(const Ref<AttributeBuff> &p_attribute_buff) const
-{
-	return equals_to(p_attribute_buff);
-}
-
-bool RuntimeBuff::operator==(const Ref<RuntimeBuff> &p_runtime_buff) const
-{
-	return buff == p_runtime_buff->buff && Math::is_equal_approx(time_left, p_runtime_buff->time_left);
 }
 
 bool RuntimeBuff::can_apply_to_attribute(const Ref<RuntimeAttribute> &p_attribute) const
@@ -751,6 +723,12 @@ bool RuntimeBuff::is_transient() const
 	return buff->transient;
 }
 
+bool RuntimeBuff::is_transient_time_based() const
+{
+	ERR_FAIL_COND_V_MSG(buff.is_null(), false, "AttributeBuff is null.");
+	return buff->transient && !Math::is_zero_approx(buff->duration);
+}
+
 void RuntimeBuff::set_buff(const Ref<AttributeBuff> &p_value)
 {
 	buff = p_value;
@@ -797,15 +775,19 @@ void RuntimeAttribute::_bind_methods()
 	ADD_SIGNAL(MethodInfo("buffs_cleared"));
 }
 
-bool RuntimeAttribute::add_buff(const Ref<AttributeBuff> &p_buff)
+Ref<RuntimeBuff> RuntimeAttribute::add_buff(const Ref<AttributeBuff> &p_buff)
 {
+	Ref<RuntimeBuff> runtime_buff;
+
 	if (!can_receive_buff(p_buff)) {
-		return false;
+		return runtime_buff;
 	}
 
-	const Ref<RuntimeBuff> runtime_buff = RuntimeBuff::from_buff(p_buff);
+	runtime_buff.instantiate();
+	runtime_buff->buff = p_buff;
+	runtime_buff->time_left = p_buff->get_duration();
 
-	ERR_FAIL_COND_V_MSG(runtime_buff.is_null(), false, "Failed to create runtime buff from attribute buff.");
+	ERR_FAIL_COND_V_MSG(runtime_buff.is_null(), runtime_buff, "Failed to create runtime buff from attribute buff.");
 
 	if (p_buff->get_transient()) {
 		if (const auto duration_merging = runtime_buff->buff->get_duration_merging(); duration_merging == AttributeBuff::DURATION_MERGE_ADD || duration_merging == AttributeBuff::DURATION_MERGE_RESTART) {
@@ -818,7 +800,7 @@ bool RuntimeAttribute::add_buff(const Ref<AttributeBuff> &p_buff)
 					}
 
 					emit_signal("buff_time_updated", maybe_runtime_buff);
-					return true;
+					return maybe_runtime_buff;
 				}
 			}
 
@@ -852,7 +834,7 @@ bool RuntimeAttribute::add_buff(const Ref<AttributeBuff> &p_buff)
 		}
 	}
 
-	return true;
+	return runtime_buff;
 }
 
 bool RuntimeAttribute::can_receive_buff(const Ref<AttributeBuff> &p_buff) const

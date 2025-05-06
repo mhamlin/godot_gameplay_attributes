@@ -52,7 +52,7 @@ func _ready() -> void:
 		}))
 	)
 	
-	attribute_container.buff_dequed.connect(func (buff: RuntimeBuff):
+	attribute_container.buff_dequeued.connect(func (buff: RuntimeBuff):
 		print("Buff {0} dequeued".format({
 			0: buff.get_buff_name()
 		}))

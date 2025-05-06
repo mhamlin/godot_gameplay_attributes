@@ -119,7 +119,7 @@ namespace octod::gameplay::attributes
 
 		/// @brief Handles the buff_applied signal.
 		/// @param p_buff The buff that was applied.
-		void _on_buff_applied(const Ref<RuntimeBuff> &p_buff);
+		void _on_buff_applied(RuntimeBuff *p_buff);
 
 		/// @brief Handles the buff_removed signal.
 		/// @param p_buff The buff that was removed.
