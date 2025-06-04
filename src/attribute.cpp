@@ -156,6 +156,7 @@ void AttributeBuff::_bind_methods()
 	ClassDB::bind_method(D_METHOD("get_duration_merging"), &AttributeBuff::get_duration_merging);
 	ClassDB::bind_method(D_METHOD("get_max_applies"), &AttributeBuff::get_stack_size);
 	ClassDB::bind_method(D_METHOD("get_operation"), &AttributeBuff::get_operation);
+	ClassDB::bind_method(D_METHOD("get_parent_buff"), &AttributeBuff::get_parent_buff);
 	ClassDB::bind_method(D_METHOD("get_queue_execution"), &AttributeBuff::get_queue_execution);
 	ClassDB::bind_method(D_METHOD("get_stack_size"), &AttributeBuff::get_stack_size);
 	ClassDB::bind_method(D_METHOD("get_transient"), &AttributeBuff::get_transient);
@@ -167,6 +168,7 @@ void AttributeBuff::_bind_methods()
 	ClassDB::bind_method(D_METHOD("set_duration_merging", "p_value"), &AttributeBuff::set_duration_merging);
 	ClassDB::bind_method(D_METHOD("set_max_applies", "p_value"), &AttributeBuff::set_stack_size);
 	ClassDB::bind_method(D_METHOD("set_operation", "p_value"), &AttributeBuff::set_operation);
+	ClassDB::bind_method(D_METHOD("set_parent_buff", "p_value"), &AttributeBuff::set_parent_buff);
 	ClassDB::bind_method(D_METHOD("set_queue_execution", "p_value"), &AttributeBuff::set_queue_execution);
 	ClassDB::bind_method(D_METHOD("set_stack_size", "p_value"), &AttributeBuff::set_stack_size);
 	ClassDB::bind_method(D_METHOD("set_transient", "p_value"), &AttributeBuff::set_transient);
@@ -178,6 +180,7 @@ void AttributeBuff::_bind_methods()
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "duration"), "set_duration", "get_duration");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "duration_merging", PROPERTY_HINT_ENUM, "Add:0,Stack:1,Restart:2"), "set_duration_merging", "get_duration_merging");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "operation", PROPERTY_HINT_RESOURCE_TYPE, "AttributeOperation"), "set_operation", "get_operation");
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "parent_buff", PROPERTY_HINT_RESOURCE_TYPE, "AttributeBuff"), "set_parent_buff", "get_parent_buff");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "max_applies"), "set_stack_size", "get_stack_size");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "stack_size"), "set_stack_size", "get_stack_size");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "queue_execution", PROPERTY_HINT_ENUM, "Parallel:0,Waterfall:1"), "set_queue_execution", "get_queue_execution");
@@ -254,6 +257,11 @@ Ref<AttributeOperation> AttributeBuff::get_operation() const
 	return operation;
 }
 
+Ref<AttributeBuff> AttributeBuff::get_parent_buff() const
+{
+	return parent_buff;
+}
+
 int AttributeBuff::get_stack_size() const
 {
 	return max_stacking;
@@ -292,6 +300,11 @@ void AttributeBuff::set_duration_merging(int p_value)
 void AttributeBuff::set_operation(const Ref<AttributeOperation> &p_value)
 {
 	operation = p_value;
+}
+
+void AttributeBuff::set_parent_buff(const Ref<AttributeBuff> &p_value)
+{
+	parent_buff = p_value;
 }
 
 void AttributeBuff::set_stack_size(const int p_value)

@@ -251,6 +251,9 @@ namespace octod::gameplay::attributes
 		/// @brief Returns the operation to apply as a Ref.
 		/// @return The operation to apply.
 		[[nodiscard]] Ref<AttributeOperation> get_operation() const;
+		/// @brief Gets the parent buff if this buff was programmatically created because the `_operate` function is overloaded.
+		/// @return The `AttributeBuff` if any, `null` otherwise
+		[[nodiscard]] Ref<AttributeBuff> get_parent_buff() const;
 		/// @brief Returns the maximum number of stacks possible.
 		/// @return The maximum number of stacks possible.
 		[[nodiscard]] int get_stack_size() const;
@@ -285,6 +288,9 @@ namespace octod::gameplay::attributes
 		/// @brief Sets the operation to apply.
 		/// @param p_value The operation to apply.
 		void set_operation(const Ref<AttributeOperation> &p_value);
+		/// @brief Sets the parent buff
+		/// @param p_value The parent buff.
+		void set_parent_buff(const Ref<AttributeBuff> &p_value);
 		/// @brief Sets the maximum number of stacks possible.
 		/// @param p_value The maximum number of stacks possible.
 		void set_stack_size(int p_value);
@@ -318,6 +324,8 @@ namespace octod::gameplay::attributes
 		int max_stacking = 0;
 		/// @brief The operation to apply.
 		Ref<AttributeOperation> operation = AttributeOperation::add(0);
+		/// @brief The parent buff
+		Ref<AttributeBuff> parent_buff;
 		/// @brief The queue execution.
 		QueueExecution queue_execution = QUEUE_EXECUTION_PARALLEL;
 		/// @brief The buff is transient and will be not affect the attribute value directly.

@@ -240,6 +240,7 @@ void AttributeContainer::apply_buff(const Ref<AttributeBuff> &p_buff)
 			derived_buff->set_buff_name(p_buff->get_buff_name());
 			derived_buff->set_duration(p_buff->get_duration());
 			derived_buff->set_duration_merging(p_buff->get_duration_merging());
+			derived_buff->set_parent_buff(p_buff);
 			derived_buff->set_queue_execution(p_buff->get_queue_execution());
 			derived_buff->set_unique(p_buff->get_unique());
 			derived_buff->set_stack_size(p_buff->get_stack_size());
