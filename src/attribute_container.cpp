@@ -52,7 +52,7 @@ void AttributeContainer::_bind_methods()
 
 void AttributeContainer::_notification(const int p_what)
 {
-	if (p_what == NOTIFICATION_READY) {
+	if (p_what == NOTIFICATION_ENTER_TREE) {
 		setup();
 		set_physics_process(true);
 	} else if (p_what == NOTIFICATION_PHYSICS_PROCESS) {
