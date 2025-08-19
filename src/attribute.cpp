@@ -909,8 +909,8 @@ TypedArray<RuntimeAttribute> RuntimeAttribute::get_parent_runtime_attributes() c
 		TypedArray<RuntimeAttribute> parent_attributes;
 
 		for (int i = 0; i < derived.size(); i++) {
-			if (Ref attribute_base = cast_to<AttributeBase>(derived[i]); attribute_base.is_valid() && !attribute_base.is_null()) {
-				if (const auto parent_attribute = attribute_container->get_runtime_attribute_by_name(attribute_base->get_attribute_name()); !parent_attribute.is_null() && parent_attribute.is_valid()) {
+			if (Ref attribute_base = cast_to<AttributeBase>(derived[i]); attribute_base.is_valid()) {
+				if (const auto parent_attribute = attribute_container->get_runtime_attribute_by_name(attribute_base->get_attribute_name()); parent_attribute.is_valid()) {
 					parent_attributes.push_back(parent_attribute);
 				}
 			}
