@@ -158,7 +158,7 @@ void AttributeContainer::add_attribute(const Ref<AttributeBase> &p_attribute)
 
 	RuntimeAttribute *runtime_attribute = memnew(RuntimeAttribute);
 
-	if (attribute_set.is_null() || !attribute_set.is_valid()) {
+	if (attribute_set.is_null()) {
 		attribute_set.instantiate();
 	}
 
@@ -174,7 +174,7 @@ void AttributeContainer::add_attribute(const Ref<AttributeBase> &p_attribute)
 		for (int i = 0; i < base_attributes.size(); i++) {
 			const Ref<AttributeBase> base_attribute = base_attributes[i];
 
-			ERR_FAIL_COND_MSG(!base_attribute.is_valid() || base_attribute.is_null(), "Required base attribute " + p_attribute->get_attribute_name() + " does not exist into the AttributeSet.");
+			ERR_FAIL_COND_MSG(base_attribute.is_null(), "Required base attribute " + p_attribute->get_attribute_name() + " does not exist into the AttributeSet.");
 
 			if (derived_attributes.has(base_attribute->get_attribute_name())) {
 				Array _derived = derived_attributes[base_attribute->get_attribute_name()];

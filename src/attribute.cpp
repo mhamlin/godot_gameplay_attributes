@@ -909,8 +909,8 @@ TypedArray<RuntimeAttribute> RuntimeAttribute::get_parent_runtime_attributes() c
 		TypedArray<RuntimeAttribute> parent_attributes;
 
 		for (int i = 0; i < derived.size(); i++) {
-			if (Ref attribute_base = cast_to<AttributeBase>(derived[i]); attribute_base.is_valid() && !attribute_base.is_null()) {
-				if (const auto parent_attribute = attribute_container->get_runtime_attribute_by_name(attribute_base->get_attribute_name()); !parent_attribute.is_null() && parent_attribute.is_valid()) {
+			if (Ref attribute_base = cast_to<AttributeBase>(derived[i]); attribute_base.is_valid()) {
+				if (const auto parent_attribute = attribute_container->get_runtime_attribute_by_name(attribute_base->get_attribute_name()); parent_attribute.is_valid()) {
 					parent_attributes.push_back(parent_attribute);
 				}
 			}
@@ -973,17 +973,30 @@ Ref<AttributeSet> RuntimeAttribute::get_attribute_set() const
 
 float RuntimeAttribute::get_buffed_value() const
 {
-	float current_value = value;
+	float add_sub_total = value;
+	float div_mul_multiplier = 1.0f;
 
 	for (int i = 0; i < buffs.size(); i++) {
 		const Ref<RuntimeBuff> buff = buffs[i];
 
-		if (Ref<AttributeBuff> attribute_buff = buff->get_buff(); attribute_buff.is_valid() && !attribute_buff.is_null()) {
-			current_value = attribute_buff->operate(current_value);
+		if (Ref<AttributeBuff> attribute_buff = buff->get_buff(); attribute_buff.is_valid()) {
+			switch (attribute_buff->get_operation()->get_operand()) {
+				case OP_ADD:
+				case OP_SUBTRACT:
+					add_sub_total = attribute_buff->operate(add_sub_total);
+					break;
+				case OP_MULTIPLY:
+				case OP_DIVIDE:
+				case OP_PERCENTAGE:
+					div_mul_multiplier = attribute_buff->operate(div_mul_multiplier);
+					break;
+				default:
+					break;
+			}
 		}
 	}
 
-	return current_value;
+	return add_sub_total * div_mul_multiplier;
 }
 
 TypedArray<AttributeBase> RuntimeAttribute::get_derived_from() const
