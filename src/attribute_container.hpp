@@ -12,7 +12,6 @@
 #define OCTOD_GAMEPLAY_ATTRIBUTES_ATTRIBUTE_CONTAINER_H
 
 #include <godot_cpp/classes/node.hpp>
-#include <godot_cpp/core/gdvirtual.gen.inc>
 
 using namespace godot;
 
@@ -105,9 +104,10 @@ namespace octod::gameplay::attributes
 		/// @param p_manual_ticking True to handle manual ticking programmatically. See `AttributeContainer::set_tick(float p_tick)` function
 		void set_manual_ticking(bool p_manual_ticking);
 
-		/// @brief Sets the tick manually.
+		/// @brief Subtracts the passed p_tick value to all timed transient AttributeBuff instances durations in the container.
+		/// 	   Ideal for turn-based games or to handle programmatic resets/updates.
 		/// @param p_tick The tick value. The value passed is subtracted from transient AttributeBuff durations
-		void set_tick(float p_tick);
+		void subtract_attribute_buffs_ticks(float p_tick);
 
 	protected:
 		/// @brief Bind methods to Godot.

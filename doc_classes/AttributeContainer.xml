@@ -107,6 +107,14 @@
 				Sets the [manual_ticking] bool.
 			</description>
 		</method>
+		<method name="subtract_attribute_buffs_ticks">
+			<return type="void" />
+			<param index="0" name="p_tick" type="float" />
+			<description>
+				Subtracts the passed p_tick value to all timed transient [AttributeBuff] instances durations in the container.
+				Ideal for turn-based games or to handle programmatic resets/updates.
+			</description>
+		</method>
 	</methods>
 	<members>
 		<member name="attribute_set" type="AttributeSet" setter="set_attribute_set" getter="get_attribute_set">

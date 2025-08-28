@@ -365,7 +365,7 @@ void AttributeContainer::set_manual_ticking(bool p_manual_ticking)
 	manual_ticking = p_manual_ticking;
 }
 
-void AttributeContainer::set_tick(float p_tick)
+void AttributeContainer::subtract_attribute_buffs_ticks(float p_tick)
 {
 	const TypedArray<RuntimeAttribute> &runtime_attributes = attributes.values();
 
@@ -437,7 +437,7 @@ void AttributeContainer::_bind_methods()
 	ClassDB::bind_method(D_METHOD("set_attribute_set", "p_attribute_set"), &AttributeContainer::set_attribute_set);
 	ClassDB::bind_method(D_METHOD("setup"), &AttributeContainer::setup);
 	ClassDB::bind_method(D_METHOD("set_manual_ticking", "p_manual_ticking"), &AttributeContainer::set_manual_ticking);
-	ClassDB::bind_method(D_METHOD("set_tick", "p_tick"), &AttributeContainer::set_tick);
+	ClassDB::bind_method(D_METHOD("subtract_attribute_buffs_ticks", "p_tick"), &AttributeContainer::subtract_attribute_buffs_ticks);
 
 	/// binds properties to godot
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "attribute_set", PROPERTY_HINT_RESOURCE_TYPE, "AttributeSet"), "set_attribute_set", "get_attribute_set");
