@@ -15,47 +15,12 @@
 
 using namespace octod::gameplay::attributes;
 
-void AttributeContainer::_bind_methods()
-{
-	/// binds methods to godot
-	ClassDB::bind_method(D_METHOD("_on_attribute_changed", "p_attribute", "p_previous_value", "p_new_value"), &AttributeContainer::_on_attribute_changed);
-	ClassDB::bind_method(D_METHOD("_on_buff_applied", "p_buff"), &AttributeContainer::_on_buff_applied);
-	ClassDB::bind_method(D_METHOD("_on_buff_removed", "p_buff"), &AttributeContainer::_on_buff_removed);
-	ClassDB::bind_method(D_METHOD("_on_buff_time_updated", "p_buff"), &AttributeContainer::_on_buff_time_updated);
-	ClassDB::bind_method(D_METHOD("add_attribute", "p_attribute"), &AttributeContainer::add_attribute);
-	ClassDB::bind_method(D_METHOD("apply_buff", "p_buff"), &AttributeContainer::apply_buff);
-	ClassDB::bind_method(D_METHOD("find", "p_predicate"), &AttributeContainer::find);
-	ClassDB::bind_method(D_METHOD("find_buffed_value", "p_predicate"), &AttributeContainer::find_buffed_value);
-	ClassDB::bind_method(D_METHOD("find_value", "p_predicate"), &AttributeContainer::find_value);
-	ClassDB::bind_method(D_METHOD("get_attribute_set"), &AttributeContainer::get_attribute_set);
-	ClassDB::bind_method(D_METHOD("get_attributes"), &AttributeContainer::get_runtime_attributes);
-	ClassDB::bind_method(D_METHOD("get_attribute_by_name", "p_name"), &AttributeContainer::get_runtime_attribute_by_name);
-	ClassDB::bind_method(D_METHOD("get_attribute_buffed_value_by_name", "p_name"), &AttributeContainer::get_attribute_buffed_value_by_name);
-	ClassDB::bind_method(D_METHOD("get_attribute_value_by_name", "p_name"), &AttributeContainer::get_attribute_value_by_name);
-	ClassDB::bind_method(D_METHOD("remove_attribute", "p_attribute"), &AttributeContainer::remove_attribute);
-	ClassDB::bind_method(D_METHOD("remove_buff", "p_buff"), &AttributeContainer::remove_buff);
-	ClassDB::bind_method(D_METHOD("set_attribute_set", "p_attribute_set"), &AttributeContainer::set_attribute_set);
-	ClassDB::bind_method(D_METHOD("setup"), &AttributeContainer::setup);
-
-	/// binds properties to godot
-	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "attribute_set", PROPERTY_HINT_RESOURCE_TYPE, "AttributeSet"), "set_attribute_set", "get_attribute_set");
-
-	/// signals binding
-	ADD_SIGNAL(MethodInfo("attribute_changed", PropertyInfo(Variant::OBJECT, "attribute", PROPERTY_HINT_RESOURCE_TYPE, "RuntimeAttributeBase"), PropertyInfo(Variant::FLOAT, "previous_value"), PropertyInfo(Variant::FLOAT, "new_value")));
-	ADD_SIGNAL(MethodInfo("buff_applied", PropertyInfo(Variant::OBJECT, "buff", PROPERTY_HINT_RESOURCE_TYPE, "RuntimeBuff")));
-	ADD_SIGNAL(MethodInfo("buff_dequeued", PropertyInfo(Variant::OBJECT, "buff", PROPERTY_HINT_RESOURCE_TYPE, "RuntimeBuff")));
-	ADD_SIGNAL(MethodInfo("buff_enqueued", PropertyInfo(Variant::OBJECT, "buff", PROPERTY_HINT_RESOURCE_TYPE, "RuntimeBuff")));
-	ADD_SIGNAL(MethodInfo("buff_removed", PropertyInfo(Variant::OBJECT, "buff", PROPERTY_HINT_RESOURCE_TYPE, "RuntimeBuff")));
-	ADD_SIGNAL(MethodInfo("buff_time_elapsed", PropertyInfo(Variant::OBJECT, "buff", PROPERTY_HINT_RESOURCE_TYPE, "RuntimeBuff")));
-	ADD_SIGNAL(MethodInfo("buff_time_updated", PropertyInfo(Variant::OBJECT, "buff", PROPERTY_HINT_RESOURCE_TYPE, "RuntimeBuff")));
-}
-
 void AttributeContainer::_notification(const int p_what)
 {
 	if (p_what == NOTIFICATION_ENTER_TREE) {
 		setup();
 		set_physics_process(true);
-	} else if (p_what == NOTIFICATION_PHYSICS_PROCESS) {
+	} else if (p_what == NOTIFICATION_PHYSICS_PROCESS && !manual_ticking) {
 		const TypedArray<RuntimeAttribute> &runtime_attributes = attributes.values();
 		const float phy_time = static_cast<float>(get_physics_process_delta_time());
 
@@ -80,7 +45,7 @@ void AttributeContainer::_notification(const int p_what)
 
 						/// we act as a fifo, so let's see if there are other buffs applied before the current one.
 						for (int64_t k = j - 1; k >= 0; k--) {
-							if (Ref<RuntimeBuff> other_buff = buffs[k]; other_buff->equals_to(buff->buff)) {
+							if (const Ref<RuntimeBuff> other_buff = buffs[k]; other_buff->equals_to(buff->buff)) {
 								should_skip = true;
 								break;
 							}
@@ -352,6 +317,11 @@ Ref<AttributeSet> AttributeContainer::get_attribute_set() const
 	return attribute_set;
 }
 
+bool AttributeContainer::get_manual_ticking() const
+{
+	return manual_ticking;
+}
+
 TypedArray<RuntimeAttribute> AttributeContainer::get_runtime_attributes() const
 {
 	return attributes.values();
@@ -388,4 +358,97 @@ void AttributeContainer::set_attribute_set(const Ref<AttributeSet> &p_attribute_
 {
 	attribute_set = p_attribute_set;
 	setup();
+}
+
+void AttributeContainer::set_manual_ticking(bool p_manual_ticking)
+{
+	manual_ticking = p_manual_ticking;
+}
+
+void AttributeContainer::subtract_attribute_buffs_ticks(float p_tick)
+{
+	const TypedArray<RuntimeAttribute> &runtime_attributes = attributes.values();
+
+	for (int64_t i = 0; i < runtime_attributes.size(); i++) {
+		const Ref<RuntimeAttribute> &attribute = runtime_attributes[i];
+
+		if (!attribute.is_valid()) {
+			continue;
+		}
+
+		TypedArray<RuntimeBuff> buffs = attribute->get_buffs();
+
+		for (int64_t j = buffs.size() - 1; j >= 0; j--) {
+			if (const Ref<RuntimeBuff> &buff = buffs[j]; buff.is_valid() && buff->is_transient_time_based()) {
+				/// check if the buff needs a waterfall or parallel execution.
+				/// for the latter, keep the code as it is
+				/// for the first, check if another buff of the same
+				/// type exists in the queue and,
+				/// if present, avoid setting the time left.
+				if (buff->get_buff()->get_queue_execution() == AttributeBuff::QueueExecution::QUEUE_EXECUTION_WATERFALL) {
+					bool should_skip = false;
+
+					/// we act as a fifo, so let's see if there are other buffs applied before the current one.
+					for (int64_t k = j - 1; k >= 0; k--) {
+						if (const Ref<RuntimeBuff> other_buff = buffs[k]; other_buff->equals_to(buff->buff)) {
+							should_skip = true;
+							break;
+						}
+					}
+
+					if (should_skip) {
+						continue;
+					}
+				}
+
+				buff->set_time_left(buff->get_time_left() - p_tick);
+
+				emit_signal("buff_time_elapsed", buff);
+
+				if (buff->can_dequeue()) {
+					emit_signal("buff_dequeued", buff);
+					remove_buff(buff->buff);
+				}
+			}
+		}
+	}
+}
+
+void AttributeContainer::_bind_methods()
+{
+	/// binds methods to godot
+	ClassDB::bind_method(D_METHOD("_on_attribute_changed", "p_attribute", "p_previous_value", "p_new_value"), &AttributeContainer::_on_attribute_changed);
+	ClassDB::bind_method(D_METHOD("_on_buff_applied", "p_buff"), &AttributeContainer::_on_buff_applied);
+	ClassDB::bind_method(D_METHOD("_on_buff_removed", "p_buff"), &AttributeContainer::_on_buff_removed);
+	ClassDB::bind_method(D_METHOD("_on_buff_time_updated", "p_buff"), &AttributeContainer::_on_buff_time_updated);
+	ClassDB::bind_method(D_METHOD("add_attribute", "p_attribute"), &AttributeContainer::add_attribute);
+	ClassDB::bind_method(D_METHOD("apply_buff", "p_buff"), &AttributeContainer::apply_buff);
+	ClassDB::bind_method(D_METHOD("find", "p_predicate"), &AttributeContainer::find);
+	ClassDB::bind_method(D_METHOD("find_buffed_value", "p_predicate"), &AttributeContainer::find_buffed_value);
+	ClassDB::bind_method(D_METHOD("find_value", "p_predicate"), &AttributeContainer::find_value);
+	ClassDB::bind_method(D_METHOD("get_attribute_set"), &AttributeContainer::get_attribute_set);
+	ClassDB::bind_method(D_METHOD("get_attributes"), &AttributeContainer::get_runtime_attributes);
+	ClassDB::bind_method(D_METHOD("get_attribute_by_name", "p_name"), &AttributeContainer::get_runtime_attribute_by_name);
+	ClassDB::bind_method(D_METHOD("get_attribute_buffed_value_by_name", "p_name"), &AttributeContainer::get_attribute_buffed_value_by_name);
+	ClassDB::bind_method(D_METHOD("get_attribute_value_by_name", "p_name"), &AttributeContainer::get_attribute_value_by_name);
+	ClassDB::bind_method(D_METHOD("get_manual_ticking"), &AttributeContainer::get_manual_ticking);
+	ClassDB::bind_method(D_METHOD("remove_attribute", "p_attribute"), &AttributeContainer::remove_attribute);
+	ClassDB::bind_method(D_METHOD("remove_buff", "p_buff"), &AttributeContainer::remove_buff);
+	ClassDB::bind_method(D_METHOD("set_attribute_set", "p_attribute_set"), &AttributeContainer::set_attribute_set);
+	ClassDB::bind_method(D_METHOD("setup"), &AttributeContainer::setup);
+	ClassDB::bind_method(D_METHOD("set_manual_ticking", "p_manual_ticking"), &AttributeContainer::set_manual_ticking);
+	ClassDB::bind_method(D_METHOD("subtract_attribute_buffs_ticks", "p_tick"), &AttributeContainer::subtract_attribute_buffs_ticks);
+
+	/// binds properties to godot
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "attribute_set", PROPERTY_HINT_RESOURCE_TYPE, "AttributeSet"), "set_attribute_set", "get_attribute_set");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "manual_ticking"), "set_manual_ticking", "get_manual_ticking");
+
+	/// signals binding
+	ADD_SIGNAL(MethodInfo("attribute_changed", PropertyInfo(Variant::OBJECT, "attribute", PROPERTY_HINT_RESOURCE_TYPE, "RuntimeAttributeBase"), PropertyInfo(Variant::FLOAT, "previous_value"), PropertyInfo(Variant::FLOAT, "new_value")));
+	ADD_SIGNAL(MethodInfo("buff_applied", PropertyInfo(Variant::OBJECT, "buff", PROPERTY_HINT_RESOURCE_TYPE, "RuntimeBuff")));
+	ADD_SIGNAL(MethodInfo("buff_dequeued", PropertyInfo(Variant::OBJECT, "buff", PROPERTY_HINT_RESOURCE_TYPE, "RuntimeBuff")));
+	ADD_SIGNAL(MethodInfo("buff_enqueued", PropertyInfo(Variant::OBJECT, "buff", PROPERTY_HINT_RESOURCE_TYPE, "RuntimeBuff")));
+	ADD_SIGNAL(MethodInfo("buff_removed", PropertyInfo(Variant::OBJECT, "buff", PROPERTY_HINT_RESOURCE_TYPE, "RuntimeBuff")));
+	ADD_SIGNAL(MethodInfo("buff_time_elapsed", PropertyInfo(Variant::OBJECT, "buff", PROPERTY_HINT_RESOURCE_TYPE, "RuntimeBuff")));
+	ADD_SIGNAL(MethodInfo("buff_time_updated", PropertyInfo(Variant::OBJECT, "buff", PROPERTY_HINT_RESOURCE_TYPE, "RuntimeBuff")));
 }

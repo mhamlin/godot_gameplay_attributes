@@ -14,6 +14,7 @@ You can place this node wherever you want in your scene tree.
 ## Members
 
 - `attribute_set`: The attribute set used to store the attributes.
+- `manual_ticking`: If set to true, `AttributeBuff` duration is going to be handled by you.
 
 ## Signals
 
@@ -41,5 +42,6 @@ This function accepts a `Callable`, a `String` or an `AttributeBuff` as a parame
 - `remove_attribute`: removes an [`Attribute`](Attribute.md) from the attribute container. This also will remove the `RuntimeAttribute` from the container.
 - `remove_buff`: removes an [`AttributeBuff`](AttributeBuff.md) from the attribute container.
 - `setup`: sets up the attribute container. This will create the `RuntimeAttribute` for each attribute in the attribute set.
+- `set_tick`: Sets the tick manually. The value passed is subtracted from transient AttributeBuff durations
 
 [Back to classes](README.md)

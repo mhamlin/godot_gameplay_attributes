@@ -74,6 +74,12 @@
 				Gets all attributes.
 			</description>
 		</method>
+		<method name="get_manual_ticking" qualifiers="const">
+			<return type="bool"/>
+			<description>
+				Returns the `manual_ticking` flag
+			</description>
+		</method>
 		<method name="remove_attribute">
 			<return type="void" />
 			<param index="0" name="p_attribute" type="AttributeBase" />
@@ -94,15 +100,28 @@
 				Sets up the container. Call this programmatically in case the [method _ready] method is not called.
 			</description>
 		</method>
+		<method name="set_manual_ticking">
+			<return type="void" />
+			<param index="0" name="p_manual_ticking" type="bool" />
+			<description>
+				Sets the [manual_ticking] bool.
+			</description>
+		</method>
+		<method name="subtract_attribute_buffs_ticks">
+			<return type="void" />
+			<param index="0" name="p_tick" type="float" />
+			<description>
+				Subtracts the passed p_tick value to all timed transient [AttributeBuff] instances durations in the container.
+				Ideal for turn-based games or to handle programmatic resets/updates.
+			</description>
+		</method>
 	</methods>
 	<members>
 		<member name="attribute_set" type="AttributeSet" setter="set_attribute_set" getter="get_attribute_set">
 			The set of attributes.
 		</member>
-		<member name="server_authoritative" type="bool" setter="set_server_authoritative" getter="get_server_authoritative" default="false">
-			If [code]true[/code], the server is authoritative for the attribute values. 
-			It means that only the server can change the attribute values.
-			[b]Note:[/b] It's still experimental, expect bugs.
+		<member name="manual_ticking" type="bool" setter="set_manual_ticking" getter="get_manual_ticking">
+			If set to true, every [AttributeBuff] duration is going to be handled by you.
 		</member>
 	</members>
 	<signals>

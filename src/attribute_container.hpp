@@ -68,6 +68,10 @@ namespace octod::gameplay::attributes
 		/// @return The attributes of the container.
 		[[nodiscard]] Ref<AttributeSet> get_attribute_set() const;
 
+		/// @brief Returns the `manual_ticking` flag.
+		/// @return The flag.
+		[[nodiscard]] bool get_manual_ticking() const;
+
 		/// @brief Returns the attributes of the container.
 		/// @return The attributes of the container.
 		[[nodiscard]] TypedArray<RuntimeAttribute> get_runtime_attributes() const;
@@ -96,6 +100,15 @@ namespace octod::gameplay::attributes
 		/// @param p_attribute_set The attributes to set.
 		void set_attribute_set(const Ref<AttributeSet> &p_attribute_set);
 
+		/// @brief Sets the manual_ticking bool
+		/// @param p_manual_ticking True to handle manual ticking programmatically. See `AttributeContainer::set_tick(float p_tick)` function
+		void set_manual_ticking(bool p_manual_ticking);
+
+		/// @brief Subtracts the passed p_tick value to all timed transient AttributeBuff instances durations in the container.
+		/// 	   Ideal for turn-based games or to handle programmatic resets/updates.
+		/// @param p_tick The tick value. The value passed is subtracted from transient AttributeBuff durations
+		void subtract_attribute_buffs_ticks(float p_tick);
+
 	protected:
 		/// @brief Bind methods to Godot.
 		static void _bind_methods();
@@ -105,6 +118,8 @@ namespace octod::gameplay::attributes
 		Dictionary attributes;
 		/// @brief Derived attributes. These are attributes that are calculated from other attributes.
 		Dictionary derived_attributes;
+		/// @brief If set to true, AttributeBuff durations are going to be handled by you.
+		bool manual_ticking = false;
 
 		/// @brief Receives a notification.
 		/// @param p_what The notification.
