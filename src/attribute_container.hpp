@@ -120,6 +120,8 @@ namespace octod::gameplay::attributes
 		Dictionary derived_attributes;
 		/// @brief If set to true, AttributeBuff durations are going to be handled by you.
 		bool manual_ticking = false;
+		/// @brief If set to true, the automatic attributes setup occurred
+		bool setup_done = false;
 
 		/// @brief Receives a notification.
 		/// @param p_what The notification.
