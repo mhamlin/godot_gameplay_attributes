@@ -826,7 +826,7 @@ Ref<RuntimeBuff> RuntimeAttribute::add_buff(const Ref<AttributeBuff> &p_buff)
 
 		if (!Math::is_zero_approx(p_buff->get_duration())) {
 			emit_signal("buff_enqueued", runtime_buff);
-			emit_signal("attribute_touched", this, value);
+			emit_signal("attribute_touched", this, get_buffed_value());
 		}
 	} else {
 		previous_value = value;
