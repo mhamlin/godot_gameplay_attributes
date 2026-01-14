@@ -214,9 +214,9 @@ void AttributeContainer::apply_buff(const Ref<AttributeBuff> &p_buff)
 			derived_buff->set_transient(p_buff->get_transient());
 			derived_buff->set_operation(operations[i]);
 
-			if (Ref<RuntimeBuff> latest_runtime_buff_applied = runtime_attribute->add_buff(derived_buff); latest_runtime_buff_applied.is_valid() && p_buff->get_transient() && !Math::is_zero_approx(p_buff->get_duration())) {
+			 if (Ref<RuntimeBuff> latest_runtime_buff_applied = runtime_attribute->add_buff(derived_buff); latest_runtime_buff_applied.is_valid() && p_buff->get_transient() && !Math::is_zero_approx(p_buff->get_duration())) {
 				emit_signal("buff_enqueued", latest_runtime_buff_applied);
-			}
+			} 
 		}
 	} else {
 		const Ref<RuntimeAttribute> runtime_attribute = get_runtime_attribute_by_name(p_buff->get_attribute_name());

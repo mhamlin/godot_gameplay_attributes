@@ -786,6 +786,7 @@ void RuntimeAttribute::_bind_methods()
 	ADD_SIGNAL(MethodInfo("buff_removed", PropertyInfo(Variant::OBJECT, "buff", PROPERTY_HINT_RESOURCE_TYPE, "RuntimeBuff")));
 	ADD_SIGNAL(MethodInfo("buff_time_updated", PropertyInfo(Variant::OBJECT, "buff", PROPERTY_HINT_RESOURCE_TYPE, "RuntimeBuff")));
 	ADD_SIGNAL(MethodInfo("buffs_cleared"));
+	ADD_SIGNAL(MethodInfo("attribute_touched"), PropertyInfo(Variant::OBJECT, "attribute", PROPERTY_HINT_RESOURCE_TYPE, "RuntimeAttributeBase"), PropertyInfo(Variant::FLOAT, "buffed_value"));
 }
 
 Ref<RuntimeBuff> RuntimeAttribute::add_buff(const Ref<AttributeBuff> &p_buff)
@@ -802,7 +803,7 @@ Ref<RuntimeBuff> RuntimeAttribute::add_buff(const Ref<AttributeBuff> &p_buff)
 
 	ERR_FAIL_COND_V_MSG(runtime_buff.is_null(), runtime_buff, "Failed to create runtime buff from attribute buff.");
 
-	if (p_buff->get_transient()) {
+	if (p_buff->get_transient()) {		
 		if (const auto duration_merging = runtime_buff->buff->get_duration_merging(); duration_merging == AttributeBuff::DURATION_MERGE_ADD || duration_merging == AttributeBuff::DURATION_MERGE_RESTART) {
 			for (int i = 0; i < buffs.size(); i++) {
 				if (const auto maybe_runtime_buff = cast_to<RuntimeBuff>(buffs[i]); maybe_runtime_buff && maybe_runtime_buff->buff->equals_to(p_buff)) {
@@ -825,6 +826,7 @@ Ref<RuntimeBuff> RuntimeAttribute::add_buff(const Ref<AttributeBuff> &p_buff)
 
 		if (!Math::is_zero_approx(p_buff->get_duration())) {
 			emit_signal("buff_enqueued", runtime_buff);
+			emit_signal("attribute_touched", this, value);
 		}
 	} else {
 		previous_value = value;
@@ -844,6 +846,7 @@ Ref<RuntimeBuff> RuntimeAttribute::add_buff(const Ref<AttributeBuff> &p_buff)
 
 		if (!Math::is_equal_approx(previous_value, value)) {
 			emit_signal("attribute_changed", this, previous_value, value);
+			emit_signal("attribute_touched", this, value);
 		}
 	}
 
@@ -888,6 +891,7 @@ void RuntimeAttribute::compute_value()
 		if (!Math::is_equal_approx(_previous_value, value)) {
 			previous_value = _previous_value;
 			emit_signal("attribute_changed", this, previous_value, value);
+			emit_signal("attribute_touched", this, value);
 		}
 	}
 }
@@ -954,6 +958,7 @@ bool RuntimeAttribute::remove_buff(const Ref<AttributeBuff> &p_buff)
 		if (const Ref<RuntimeBuff> buff = buffs[i]; buff->equals_to(p_buff)) {
 			buffs.remove_at(i);
 			emit_signal("buff_removed", buff);
+			emit_signal("attribute_touched", this, get_buffed_value());
 			return true;
 		}
 	}
