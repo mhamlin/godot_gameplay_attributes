@@ -786,7 +786,7 @@ void RuntimeAttribute::_bind_methods()
 	ADD_SIGNAL(MethodInfo("buff_removed", PropertyInfo(Variant::OBJECT, "buff", PROPERTY_HINT_RESOURCE_TYPE, "RuntimeBuff")));
 	ADD_SIGNAL(MethodInfo("buff_time_updated", PropertyInfo(Variant::OBJECT, "buff", PROPERTY_HINT_RESOURCE_TYPE, "RuntimeBuff")));
 	ADD_SIGNAL(MethodInfo("buffs_cleared"));
-	ADD_SIGNAL(MethodInfo("attribute_touched"), PropertyInfo(Variant::OBJECT, "attribute", PROPERTY_HINT_RESOURCE_TYPE, "RuntimeAttributeBase"), PropertyInfo(Variant::FLOAT, "buffed_value"));
+	ADD_SIGNAL(MethodInfo("attribute_touched", PropertyInfo(Variant::OBJECT, "attribute", PROPERTY_HINT_RESOURCE_TYPE, "RuntimeAttributeBase"), PropertyInfo(Variant::FLOAT, "buffed_value")));
 }
 
 Ref<RuntimeBuff> RuntimeAttribute::add_buff(const Ref<AttributeBuff> &p_buff)
